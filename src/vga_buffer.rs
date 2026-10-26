@@ -1,7 +1,5 @@
 use core::fmt;
-use lazy_static::lazy_static;
 use spin::Mutex;
-use volatile::Volatile;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -30,7 +28,7 @@ pub enum Color {
 struct ColorCode(u8);
 
 impl ColorCode {
-    fn new(foreground: Color, background: Color) -> Self {
+    const fn new(foreground: Color, background: Color) -> Self {
         Self((background as u8) << 4 | (foreground as u8))
     }
 }
@@ -47,16 +45,32 @@ const BUFFER_WIDTH: usize = 80;
 
 #[repr(transparent)]
 struct Buffer {
-    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 pub struct Writer {
     column_position: usize,
     color_code: ColorCode,
-    buffer: &'static mut Buffer,
+    buffer: *mut Buffer,
 }
 
+// SAFETY: only ever accessed through the Mutex below; 0xb8000 is a fixed MMIO region.
+unsafe impl Send for Writer {}
+
 impl Writer {
+    fn cell(&self, row: usize, col: usize) -> *mut ScreenChar {
+        assert!(row < BUFFER_HEIGHT && col < BUFFER_WIDTH);
+        unsafe { &raw mut ((*self.buffer).chars)[row][col] }
+    }
+
+    fn write_cell(&mut self, row: usize, col: usize, character: ScreenChar) {
+        unsafe { self.cell(row, col).write_volatile(character) }
+    }
+
+    fn read_cell(&mut self, row: usize, col: usize) -> ScreenChar {
+        unsafe { self.cell(row, col).read_volatile() }
+    }
+
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
@@ -69,10 +83,14 @@ impl Writer {
                 let col = self.column_position;
 
                 let color_code = self.color_code;
-                self.buffer.chars[row][col].write(ScreenChar {
-                    ascii_character: byte,
-                    color_code,
-                });
+                self.write_cell(
+                    row,
+                    col,
+                    ScreenChar {
+                        ascii_character: byte,
+                        color_code,
+                    },
+                );
                 self.column_position += 1;
             }
         }
@@ -91,8 +109,8 @@ impl Writer {
     fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
-                let character = self.buffer.chars[row][col].read();
-                self.buffer.chars[row - 1][col].write(character);
+                let character = self.read_cell(row, col);
+                self.write_cell(row - 1, col, character);
             }
         }
         self.clear_row(BUFFER_HEIGHT - 1);
@@ -105,7 +123,7 @@ impl Writer {
             color_code: self.color_code,
         };
         for col in 0..BUFFER_WIDTH {
-            self.buffer.chars[row][col].write(blank);
+            self.write_cell(row, col, blank);
         }
     }
 }
@@ -117,10 +135,8 @@ impl fmt::Write for Writer {
     }
 }
 
-lazy_static! {
-    pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
-        column_position: 0,
-        color_code: ColorCode::new(Color::White, Color::Black),
-        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-    });
-}
+pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
+    column_position: 0,
+    color_code: ColorCode::new(Color::White, Color::Black),
+    buffer: 0xb8000 as *mut Buffer,
+});
