@@ -1,4 +1,3 @@
-use core::fmt;
 use spin::Mutex;
 
 #[allow(dead_code)]
@@ -47,6 +46,12 @@ const BUFFER_WIDTH: usize = 80;
 struct Buffer {
     chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
+
+pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
+    column_position: 0,
+    color_code: ColorCode::new(Color::White, Color::Black),
+    buffer: 0xb8000 as *mut Buffer,
+});
 
 pub struct Writer {
     column_position: usize,
@@ -128,15 +133,9 @@ impl Writer {
     }
 }
 
-impl fmt::Write for Writer {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
+impl core::fmt::Write for Writer {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
         self.write_string(s);
         Ok(())
     }
 }
-
-pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
-    column_position: 0,
-    color_code: ColorCode::new(Color::White, Color::Black),
-    buffer: 0xb8000 as *mut Buffer,
-});

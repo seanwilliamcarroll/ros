@@ -9,3 +9,6 @@ target = "x86_64-ros.json"
 
 [target.'cfg(target_os = "none")']
 runner = "bootimage runner"
+
+[future-incompat-report]
+frequency = "never"
