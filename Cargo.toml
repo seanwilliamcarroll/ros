@@ -1,16 +1,18 @@
+[workspace]
+resolver = "3"
+members = ["kernel"]
+
 [package]
 name = "ros"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bootloader = "0.9.35"
-spin = "0.5.2"
+ovmf-prebuilt = "0.2.4"   # only needed for UEFI boot
+
+[build-dependencies]
+kernel = { path = "kernel", artifact = "bin", target = "x86_64-unknown-none" }
+bootloader = "0.11.12"
 
 
-[profile.dev]
-panic = "abort"
-
-[profile.release]
-panic = "abort"
 
