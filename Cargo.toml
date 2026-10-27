@@ -1,18 +1,19 @@
 [workspace]
 resolver = "3"
-members = ["kernel"]
+members = ["kernel", "runner"]
+default-members = ["runner"]   # a bare `cargo build` shouldn't try to build the kernel for macOS
 
-[package]
-name = "ros"
-version = "0.1.0"
-edition = "2024"
+# [package]
+# name = "ros"
+# version = "0.1.0"
+# edition = "2024"
 
-[dependencies]
-ovmf-prebuilt = "0.2.4"   # only needed for UEFI boot
+# [dependencies]
+# ovmf-prebuilt = "0.2.4"   # only needed for UEFI boot
 
-[build-dependencies]
-kernel = { path = "kernel", artifact = "bin", target = "x86_64-unknown-none" }
-bootloader = "0.11.12"
+# [build-dependencies]
+# kernel = { path = "kernel", artifact = "bin", target = "x86_64-unknown-none" }
+# bootloader = "0.11.12"
 
 
 

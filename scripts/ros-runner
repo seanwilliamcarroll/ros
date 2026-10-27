@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TARGET_DIR="$ROOT/target/runner"
+BIN="$TARGET_DIR/release/ros-runner"
+
+if [ -x "$BIN" ]; then QUIET=--quiet; else QUIET=; fi
+
+cargo build $QUIET --release \
+    --manifest-path "$ROOT/runner/Cargo.toml" \
+    --target-dir "$TARGET_DIR"
+
+exec "$BIN" "$@"

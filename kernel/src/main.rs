@@ -1,11 +1,13 @@
 #![no_std]
 #![no_main]
+#![feature(custom_test_frameworks)]
+#![test_runner(kernel::test_runner)]
+#![reexport_test_harness_main = "test_main"]
 
-mod framebuffer;
-
-use bootloader_api::config::{BootloaderConfig, Mapping};
-use bootloader_api::{BootInfo, entry_point};
+use bootloader_api::config::Mapping;
+use bootloader_api::{BootInfo, BootloaderConfig, entry_point};
 use core::panic::PanicInfo;
+use kernel::prelude::*;
 
 pub static BOOTLOADER_CONFIG: BootloaderConfig = {
     let mut config = BootloaderConfig::new_default();
@@ -18,19 +20,30 @@ entry_point!(kernel_main, config = &BOOTLOADER_CONFIG);
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     if let Some(fb) = boot_info.framebuffer.as_mut() {
         let info = fb.info();
-        framebuffer::init(fb.buffer_mut(), info);
+        kernel::framebuffer::init(fb.buffer_mut(), info);
     }
 
     println!("Hello World{}", "!");
+
+    #[cfg(test)]
+    test_main();
 
     loop {
         core::hint::spin_loop();
     }
 }
 
+#[cfg(not(test))]
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    println!("{info}");
     loop {
         core::hint::spin_loop();
     }
+}
+
+#[cfg(test)]
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    kernel::test_panic_handler(info)
 }

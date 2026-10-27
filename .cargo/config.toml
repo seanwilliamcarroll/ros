@@ -1,2 +1,7 @@
-[unstable]
-bindeps = true
+[target.x86_64-unknown-none]
+runner = "scripts/ros-runner"   # relative to the repo root (parent of .cargo/)
+
+[alias]
+kbuild = "build -p kernel --target x86_64-unknown-none"
+krun   = "run   -p kernel --target x86_64-unknown-none"
+ktest  = "test -q -p kernel --target x86_64-unknown-none"
