@@ -3,14 +3,20 @@
 #![feature(custom_test_frameworks)]
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
+#![feature(abi_x86_interrupt)]
 
 pub mod framebuffer;
+pub mod interrupts;
 pub mod serial;
 
 use core::panic::PanicInfo;
 
 pub mod prelude {
     pub use crate::{print, println, serial_print, serial_println};
+}
+
+pub fn init() {
+    interrupts::init_idt();
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -63,6 +69,7 @@ bootloader_api::entry_point!(test_kernel_main);
 
 #[cfg(test)]
 fn test_kernel_main(_boot_info: &'static mut bootloader_api::BootInfo) -> ! {
+    init();
     test_main();
     loop {
         core::hint::spin_loop();

@@ -23,10 +23,16 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
         kernel::framebuffer::init(fb.buffer_mut(), info);
     }
 
+    kernel::init();
+
     println!("Hello World{}", "!");
+
+    x86_64::instructions::interrupts::int3();
 
     #[cfg(test)]
     test_main();
+
+    println!("Didn't crash");
 
     loop {
         core::hint::spin_loop();
