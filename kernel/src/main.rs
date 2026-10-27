@@ -21,7 +21,7 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
         framebuffer::init(fb.buffer_mut(), info);
     }
 
-    // println!("Hello World{}", "!");
+    println!("Hello World{}", "!");
 
     loop {
         core::hint::spin_loop();
