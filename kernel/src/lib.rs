@@ -8,6 +8,7 @@
 pub mod framebuffer;
 pub mod interrupts;
 pub mod serial;
+pub mod sync;
 
 use core::panic::PanicInfo;
 
