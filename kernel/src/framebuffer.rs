@@ -1,8 +1,8 @@
+use crate::sync::SpinLock;
 use bootloader_api::info::{FrameBufferInfo, PixelFormat};
 use noto_sans_mono_bitmap::{
     FontWeight, RasterHeight, RasterizedChar, get_raster, get_raster_width,
 };
-use spin::Mutex;
 
 const WEIGHT: FontWeight = FontWeight::Regular;
 const HEIGHT: RasterHeight = RasterHeight::Size16;
@@ -97,7 +97,7 @@ impl core::fmt::Write for Writer {
     }
 }
 
-pub static WRITER: Mutex<Option<Writer>> = Mutex::new(None);
+pub static WRITER: SpinLock<Option<Writer>> = SpinLock::new(None);
 
 pub fn init(buf: &'static mut [u8], info: FrameBufferInfo) {
     *WRITER.lock() = Some(Writer::new(buf, info));

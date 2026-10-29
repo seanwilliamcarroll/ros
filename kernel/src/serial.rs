@@ -1,8 +1,8 @@
+use crate::sync::SpinLock;
 use core::fmt::{self, Write};
-use spin::Mutex;
 use uart_16550::SerialPort;
 
-static SERIAL1: Mutex<Option<SerialPort>> = Mutex::new(None);
+static SERIAL1: SpinLock<Option<SerialPort>> = SpinLock::new(None);
 
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
