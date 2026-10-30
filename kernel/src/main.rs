@@ -27,8 +27,6 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
 
     println!("Hello World{}", "!");
 
-    x86_64::instructions::interrupts::int3();
-
     #[cfg(test)]
     test_main();
 

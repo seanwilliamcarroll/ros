@@ -7,6 +7,7 @@
 #![reexport_test_harness_main = "test_main"]
 
 pub mod framebuffer;
+pub mod gdt;
 pub mod interrupts;
 pub mod serial;
 pub mod sync;
@@ -18,6 +19,7 @@ pub mod prelude {
 }
 
 pub fn init() {
+    gdt::init();
     interrupts::init_idt();
 }
 
