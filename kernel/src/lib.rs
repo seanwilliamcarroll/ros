@@ -25,6 +25,12 @@ pub fn init() {
     x86_64::instructions::interrupts::enable();
 }
 
+pub fn halt_loop() -> ! {
+    loop {
+        x86_64::instructions::hlt();
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u32)]
 pub enum QemuExitCode {
@@ -37,9 +43,7 @@ pub fn exit_qemu(code: QemuExitCode) -> ! {
     // SAFETY: the runner always attaches isa-debug-exit at 0xf4.
     unsafe { Port::new(0xf4).write(code as u32) };
     // Only reached if the device is missing (e.g. booted outside the runner).
-    loop {
-        core::hint::spin_loop();
-    }
+    halt_loop();
 }
 
 pub trait Testable {
@@ -77,9 +81,7 @@ bootloader_api::entry_point!(test_kernel_main);
 fn test_kernel_main(_boot_info: &'static mut bootloader_api::BootInfo) -> ! {
     init();
     test_main();
-    loop {
-        core::hint::spin_loop();
-    }
+    halt_loop();
 }
 
 #[cfg(test)]

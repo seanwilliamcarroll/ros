@@ -32,18 +32,14 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
 
     println!("Didn't crash");
 
-    loop {
-        core::hint::spin_loop();
-    }
+    kernel::halt_loop();
 }
 
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{info}");
-    loop {
-        core::hint::spin_loop();
-    }
+    kernel::halt_loop();
 }
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
-use crate::sync::SpinLock;
+use crate::sync::IrqSpinLock;
 use bootloader_api::info::{FrameBufferInfo, PixelFormat};
 use noto_sans_mono_bitmap::{
     FontWeight, RasterHeight, RasterizedChar, get_raster, get_raster_width,
@@ -97,7 +97,7 @@ impl core::fmt::Write for Writer {
     }
 }
 
-pub static WRITER: SpinLock<Option<Writer>> = SpinLock::new(None);
+pub static WRITER: IrqSpinLock<Option<Writer>> = IrqSpinLock::new(None);
 
 pub fn init(buf: &'static mut [u8], info: FrameBufferInfo) {
     *WRITER.lock() = Some(Writer::new(buf, info));

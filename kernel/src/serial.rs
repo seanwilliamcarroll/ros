@@ -1,8 +1,8 @@
-use crate::sync::SpinLock;
+use crate::sync::IrqSpinLock;
 use core::fmt::{self, Write};
 use uart_16550::SerialPort;
 
-static SERIAL1: SpinLock<Option<SerialPort>> = SpinLock::new(None);
+static SERIAL1: IrqSpinLock<Option<SerialPort>> = IrqSpinLock::new(None);
 
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
