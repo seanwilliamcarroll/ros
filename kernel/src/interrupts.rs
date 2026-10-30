@@ -14,6 +14,7 @@ pub static PICS: SpinLock<ChainedPics> =
 #[repr(u8)]
 pub enum InterruptIndex {
     Timer = PIC_1_OFFSET,
+    Keyboard,
 }
 
 impl InterruptIndex {
@@ -34,6 +35,7 @@ pub fn init_idt() {
                 .set_stack_index(crate::gdt::DOUBLE_FAULT_IST_INDEX);
         }
         idt[InterruptIndex::Timer.as_u8()].set_handler_fn(timer_interrupt_handler);
+        idt[InterruptIndex::Keyboard.as_u8()].set_handler_fn(keyboard_interrupt_handler);
         idt
     })
     .load();
@@ -52,6 +54,37 @@ extern "x86-interrupt" fn double_fault_handler(
 
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
     print!(".");
+
+    unsafe {
+        PICS.lock()
+            .notify_end_of_interrupt(InterruptIndex::Timer.as_u8())
+    }
+}
+
+extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    use pc_keyboard::{DecodedKey, HandleControl, PS2Keyboard, ScancodeSet1, layouts};
+    use x86_64::instructions::port::Port;
+
+    static KEYBOARD: SpinLock<PS2Keyboard<layouts::Us104Key, ScancodeSet1>> =
+        SpinLock::new(PS2Keyboard::new(
+            ScancodeSet1::new(),
+            layouts::Us104Key,
+            HandleControl::Ignore,
+        ));
+
+    let mut keyboard = KEYBOARD.lock();
+    // IO Port number for keyboard
+    let mut port = Port::new(0x60);
+    let scancode: u8 = unsafe { port.read() };
+
+    if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
+        if let Some(key) = keyboard.process_keyevent(key_event) {
+            match key {
+                DecodedKey::Unicode(character) => print!("{character}"),
+                DecodedKey::RawKey(key) => print!("{key:?}"),
+            }
+        }
+    }
 
     unsafe {
         PICS.lock()
